@@ -1,41 +1,64 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
+import { useState, useEffect } from "react";
+import { auth } from "./services/firebaseConfig";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import Login from "./components/Login";
+import Register from "./components/Register";
+import ExpenseForm from "./components/ExpenseForm";
+import ExpenseList from "./components/ExpenseList";
+import Summary from "./components/Summary";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [user, setUser] = useState(null);
+  const [showRegister, setShowRegister] = useState(false);
+  const [expenses, setExpenses] = useState([]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Logout automático cada 10 segundos
+  useEffect(() => {
+    if (user) {
+      const logoutTimer = setTimeout(() => {
+        signOut(auth);
+        console.log("Se cerró sesión automáticamente.");
+      }, 1000000); // 10 segundos
+
+      return () => clearTimeout(logoutTimer);
+    }
+  }, [user]);
+
+  if (!user) {
+    return showRegister ? (
+      <Register onRegister={() => setShowRegister(false)} />
+    ) : (
+      <Login
+        onLogin={() => setShowRegister(false)}
+        onShowRegister={() => setShowRegister(true)}
+      />
+    );
+  }
+
+  const addExpense = (newExpense) => {
+    setExpenses([...expenses, newExpense]);
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <div className="flex space-x-4">
-        <a href="https://vitejs.dev" target="_blank" rel="noopener noreferrer">
-          <img src={viteLogo} className="w-24 h-24" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank" rel="noopener noreferrer">
-          <img
-            src={reactLogo}
-            className="w-24 h-24 animate-spin-slow"
-            alt="React logo"
-          />
-        </a>
-      </div>
-      <h1 className="text-4xl font-bold mt-8 text-gray-800">Vite + React</h1>
-      <div className="p-6 mt-6 bg-white rounded-lg shadow-lg">
-        <button
-          className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          count is {count}
-        </button>
-        <p className="mt-4 text-gray-600">
-          Edit <code className="text-blue-600">src/App.jsx</code> and save to
-          test HMR
-        </p>
-      </div>
-      <p className="mt-8 text-gray-500">
-        Click on the Vite and React logos to learn more
-      </p>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Control de Gastos</h1>
+      <button
+        onClick={() => signOut(auth)}
+        className="bg-red-500 text-white p-2 rounded"
+      >
+        Cerrar Sesión
+      </button>
+      <ExpenseForm addExpense={addExpense} />
+      <ExpenseList expenses={expenses} />
+      <Summary expenses={expenses} />
     </div>
   );
 }
