@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from "react";
 import ExpenseItem from "./ExpenseItem";
-import { getExpenses } from "../services/expenseService";
+import { getExpenses, deleteExpense } from "../services/expenseService";
 
 function ExpenseList() {
   const [expenses, setExpenses] = useState([]);
 
   useEffect(() => {
     const fetchExpenses = async () => {
-      const data = await getExpenses();
+      const data = await getExpenses(); // Obtiene solo los gastos del usuario logueado
       setExpenses(data);
     };
     fetchExpenses();
   }, []);
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
+    await deleteExpense(id);
     setExpenses((prevExpenses) =>
       prevExpenses.filter((expense) => expense.id !== id)
     );
@@ -22,13 +23,17 @@ function ExpenseList() {
   return (
     <div>
       <h2>Lista de Gastos</h2>
-      {expenses.map((expense) => (
-        <ExpenseItem
-          key={expense.id}
-          expense={expense}
-          onDelete={handleDelete} // Pasar la función onDelete aquí
-        />
-      ))}
+      {expenses.length === 0 ? (
+        <p>No tienes gastos registrados.</p>
+      ) : (
+        expenses.map((expense) => (
+          <ExpenseItem
+            key={expense.id}
+            expense={expense}
+            onDelete={handleDelete}
+          />
+        ))
+      )}
     </div>
   );
 }

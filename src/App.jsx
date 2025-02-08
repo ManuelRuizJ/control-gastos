@@ -26,7 +26,7 @@ function App() {
       const logoutTimer = setTimeout(() => {
         signOut(auth);
         console.log("Se cerró sesión automáticamente.");
-      }, 1000000); // 10 segundos
+      }, 600000); // 10 minutos
 
       return () => clearTimeout(logoutTimer);
     }
@@ -43,8 +43,13 @@ function App() {
     );
   }
 
-  const addExpense = (newExpense) => {
-    setExpenses([...expenses, newExpense]);
+  const addExpense = async (newExpense) => {
+    await addExpense(
+      newExpense.amount,
+      newExpense.category,
+      newExpense.description
+    );
+    setExpenses(await getExpenses()); // Recargar lista desde Firebase
   };
 
   return (
