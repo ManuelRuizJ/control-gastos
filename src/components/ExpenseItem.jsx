@@ -54,7 +54,7 @@ function ExpenseItem({ expense, onEdit, onDelete }) {
       {/* Botones */}
       <div className="flex space-x-3">
         <button
-          onClick={() => onEdit(expense)}
+          onClick={() => onEdit(expense)} // Llama a onEdit con el gasto
           className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition"
         >
           Editar

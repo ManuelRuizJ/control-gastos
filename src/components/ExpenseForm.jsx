@@ -1,10 +1,16 @@
-import React, { useState } from "react";
-import { addExpense, getExpenses } from "../services/expenseService";
+import React, { useState, useEffect } from "react";
+import {
+  addExpense,
+  updateExpense,
+  getExpenses,
+} from "../services/expenseService";
 
-const ExpenseForm = ({ onExpenseAdded }) => {
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("");
-  const [description, setDescription] = useState("");
+const ExpenseForm = ({ onExpenseAdded, expense, onCancel }) => {
+  const [amount, setAmount] = useState(expense ? expense.amount : "");
+  const [category, setCategory] = useState(expense ? expense.category : "");
+  const [description, setDescription] = useState(
+    expense ? expense.description : ""
+  );
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
@@ -17,6 +23,19 @@ const ExpenseForm = ({ onExpenseAdded }) => {
     "Otros",
   ];
 
+  // Efecto para actualizar el estado cuando el gasto cambia
+  useEffect(() => {
+    if (expense) {
+      setAmount(expense.amount);
+      setCategory(expense.category);
+      setDescription(expense.description);
+    } else {
+      setAmount("");
+      setCategory("");
+      setDescription("");
+    }
+  }, [expense]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!amount || !category || !description) {
@@ -25,22 +44,27 @@ const ExpenseForm = ({ onExpenseAdded }) => {
     }
 
     try {
-      // Try-catch block for better error handling
-      await addExpense(amount, category, description);
+      if (expense) {
+        // Modo edición: Actualizar el gasto existente
+        await updateExpense(expense.id, { amount, category, description });
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 2000);
+      } else {
+        // Modo creación: Agregar un nuevo gasto
+        await addExpense(amount, category, description);
+        setAmount("");
+        setCategory("");
+        setDescription("");
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 2000);
+      }
+
+      // Recargar la lista de gastos
       const updatedExpenses = await getExpenses();
-
-      setAmount("");
-      setCategory("");
-      setDescription("");
-      setError("");
-      setSuccess(true);
-
       onExpenseAdded(updatedExpenses);
-
-      setTimeout(() => setSuccess(false), 2000);
     } catch (err) {
-      // Handle errors from the service calls
-      console.error("Error adding expense:", err);
+      console.error("Error al guardar el gasto:", err);
+      setError("Hubo un error al guardar el gasto. Inténtalo de nuevo.");
     }
   };
 
@@ -50,13 +74,15 @@ const ExpenseForm = ({ onExpenseAdded }) => {
       className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md mx-auto mt-6"
     >
       <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">
-        Agregar Gasto
+        {expense ? "Editar Gasto" : "Agregar Gasto"}
       </h2>
 
       {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
       {success && (
         <p className="text-green-500 text-sm mb-2">
-          ¡Gasto agregado correctamente!
+          {expense
+            ? "¡Gasto actualizado correctamente!"
+            : "¡Gasto agregado correctamente!"}
         </p>
       )}
 
@@ -107,17 +133,28 @@ const ExpenseForm = ({ onExpenseAdded }) => {
         />
       </div>
 
-      <button
-        type="submit"
-        className={`w-full mt-6 py-2 rounded-lg font-medium transition ${
-          amount && category && description
-            ? "bg-blue-500 text-white hover:bg-blue-600"
-            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-        }`}
-        disabled={!amount || !category || !description}
-      >
-        Agregar Gasto
-      </button>
+      <div className="flex space-x-3 mt-6">
+        <button
+          type="submit"
+          className={`flex-1 py-2 rounded-lg font-medium transition ${
+            amount && category && description
+              ? "bg-blue-500 text-white hover:bg-blue-600"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
+          disabled={!amount || !category || !description}
+        >
+          {expense ? "Actualizar" : "Agregar"}
+        </button>
+        {expense && ( // Mostrar botón de cancelar solo en modo edición
+          <button
+            type="button"
+            onClick={onCancel}
+            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
+          >
+            Cancelar
+          </button>
+        )}
+      </div>
     </form>
   );
 };

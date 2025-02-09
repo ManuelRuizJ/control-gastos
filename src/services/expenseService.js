@@ -3,12 +3,14 @@ import {
   getFirestore,
   collection,
   addDoc,
+  getDoc,
   getDocs,
   deleteDoc,
   doc,
   query,
   where,
   Timestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { app, auth } from "./firebaseConfig";
 import { getAuth } from "firebase/auth";
@@ -43,7 +45,12 @@ export const deleteExpense = async (expenseId) => {
     const expenseRef = doc(db, "expenses", expenseId);
     const expenseSnap = await getDoc(expenseRef);
 
-    if (!expenseSnap.exists() || expenseSnap.data().userId !== user.uid) {
+    if (!expenseSnap.exists()) {
+      throw new Error("El gasto no existe.");
+    }
+
+    const expenseData = expenseSnap.data();
+    if (expenseData.userId !== user.uid) {
       throw new Error("No tienes permiso para eliminar este gasto.");
     }
 
@@ -77,4 +84,23 @@ const saveExpense = async (amount, category, description) => {
     date: Timestamp.fromDate(new Date()), // Guarda la fecha como Timestamp
   };
   await firestore.collection("expenses").add(expenseData);
+};
+
+export const updateExpense = async (expenseId, updatedData) => {
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("No hay usuario autenticado.");
+
+    const expenseRef = doc(db, "expenses", expenseId);
+    const expenseSnap = await getDoc(expenseRef);
+
+    if (!expenseSnap.exists() || expenseSnap.data().userId !== user.uid) {
+      throw new Error("No tienes permiso para editar este gasto.");
+    }
+
+    await updateDoc(expenseRef, updatedData); // Actualiza el gasto
+    console.log("Gasto actualizado con ID: ", expenseId);
+  } catch (error) {
+    console.error("Error al actualizar gasto: ", error);
+  }
 };
