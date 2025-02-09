@@ -104,3 +104,35 @@ export const updateExpense = async (expenseId, updatedData) => {
     console.error("Error al actualizar gasto: ", error);
   }
 };
+
+// Función para agregar un ingreso
+export const addIncome = async (amount) => {
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("No hay usuario autenticado.");
+
+    const docRef = await addDoc(collection(db, "incomes"), {
+      amount,
+      userId: user.uid,
+      timestamp: Timestamp.fromDate(new Date()),
+    });
+    console.log("Ingreso agregado con ID: ", docRef.id);
+  } catch (error) {
+    console.error("Error al agregar ingreso: ", error);
+  }
+};
+
+// Función para obtener los ingresos del usuario
+export const getIncomes = async () => {
+  const user = auth.currentUser;
+  if (!user) return [];
+
+  const q = query(collection(db, "incomes"), where("userId", "==", user.uid));
+  const querySnapshot = await getDocs(q);
+
+  const incomes = [];
+  querySnapshot.forEach((doc) => {
+    incomes.push({ id: doc.id, ...doc.data() });
+  });
+  return incomes;
+};

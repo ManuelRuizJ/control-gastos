@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { auth } from "./services/firebaseConfig";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import Login from "./components/Login";
@@ -6,15 +6,13 @@ import Register from "./components/Register";
 import ExpenseForm from "./components/ExpenseForm";
 import ExpenseList from "./components/ExpenseList";
 import Summary from "./components/Summary";
-import {
-  addExpense as saveExpense,
-  getExpenses,
-} from "./services/expenseService"; // Asegura importar funciones correctas
+import { addExpense, getExpenses, addIncome } from "./services/expenseService";
 
 function App() {
   const [user, setUser] = useState(null);
   const [showRegister, setShowRegister] = useState(false);
   const [expenses, setExpenses] = useState([]);
+  const [newIncome, setNewIncome] = useState(""); // Estado para el nuevo ingreso
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -35,6 +33,36 @@ function App() {
     }
   }, [user]);
 
+  // Obtener los gastos al cargar el componente
+  useEffect(() => {
+    if (user) {
+      const fetchExpenses = async () => {
+        const data = await getExpenses();
+        setExpenses(data);
+      };
+      fetchExpenses();
+    }
+  }, [user]);
+
+  // Agregar un nuevo gasto
+  const addExpenseHandler = async (newExpense) => {
+    await addExpense(
+      newExpense.amount,
+      newExpense.category,
+      newExpense.description
+    );
+    setExpenses(await getExpenses()); // Recargar lista desde Firebase
+  };
+
+  // Agregar un nuevo ingreso
+  const addIncomeHandler = async () => {
+    if (newIncome) {
+      await addIncome(parseFloat(newIncome));
+      setNewIncome(""); // Limpiar el campo de ingreso
+      setExpenses(await getExpenses()); // Recargar lista desde Firebase
+    }
+  };
+
   if (!user) {
     return showRegister ? (
       <Register onRegister={() => setShowRegister(false)} />
@@ -45,15 +73,6 @@ function App() {
       />
     );
   }
-
-  const addExpense = async (newExpense) => {
-    await saveExpense(
-      newExpense.amount,
-      newExpense.category,
-      newExpense.description
-    );
-    setExpenses(await getExpenses()); // Recargar lista desde Firebase
-  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
@@ -72,7 +91,29 @@ function App() {
 
       {/* Contenido principal */}
       <div className="w-full max-w-3xl space-y-6 mt-6">
-        <ExpenseForm addExpense={addExpense} />
+        {/* Formulario para agregar ingresos */}
+        <div className="bg-white shadow-lg rounded-lg p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Agregar Ingreso
+          </h2>
+          <div className="flex space-x-3">
+            <input
+              type="number"
+              placeholder="Monto del ingreso"
+              value={newIncome}
+              onChange={(e) => setNewIncome(e.target.value)}
+              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+            <button
+              onClick={addIncomeHandler}
+              className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
+            >
+              Agregar
+            </button>
+          </div>
+        </div>
+
+        <ExpenseForm addExpense={addExpenseHandler} />
         <ExpenseList expenses={expenses} />
         <Summary expenses={expenses} />
       </div>
