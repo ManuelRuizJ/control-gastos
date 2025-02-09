@@ -45,6 +45,9 @@ function ExpenseItem({ expense, onEdit, onDelete }) {
         <p className="text-gray-600">
           <span className="font-medium">Categoría:</span> {expense.category}
         </p>
+        <p className="text-gray-600">
+          <span className="font-medium">Producto:</span> {expense.description}
+        </p>
         <p className="text-gray-500 text-sm">
           <span className="font-medium">Fecha:</span>{" "}
           {formatDate(expense.timestamp)} {/* Usa la función formatDate */}
