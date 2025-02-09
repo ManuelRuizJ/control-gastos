@@ -6,6 +6,10 @@ import Register from "./components/Register";
 import ExpenseForm from "./components/ExpenseForm";
 import ExpenseList from "./components/ExpenseList";
 import Summary from "./components/Summary";
+import {
+  addExpense as saveExpense,
+  getExpenses,
+} from "./services/expenseService"; // Asegura importar funciones correctas
 
 function App() {
   const [user, setUser] = useState(null);
@@ -16,11 +20,10 @@ function App() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
     });
-
     return () => unsubscribe();
   }, []);
 
-  // Logout automático cada 10 segundos
+  // Logout automático cada 10 minutos
   useEffect(() => {
     if (user) {
       const logoutTimer = setTimeout(() => {
@@ -44,7 +47,7 @@ function App() {
   }
 
   const addExpense = async (newExpense) => {
-    await addExpense(
+    await saveExpense(
       newExpense.amount,
       newExpense.category,
       newExpense.description
@@ -53,17 +56,26 @@ function App() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Control de Gastos</h1>
-      <button
-        onClick={() => signOut(auth)}
-        className="bg-red-500 text-white p-2 rounded"
-      >
-        Cerrar Sesión
-      </button>
-      <ExpenseForm addExpense={addExpense} />
-      <ExpenseList expenses={expenses} />
-      <Summary expenses={expenses} />
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
+      {/* Cabecera */}
+      <header className="w-full max-w-3xl bg-white shadow-lg rounded-lg p-6 flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-800">
+          💰 Control de Gastos
+        </h1>
+        <button
+          onClick={() => signOut(auth)}
+          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition"
+        >
+          Cerrar Sesión
+        </button>
+      </header>
+
+      {/* Contenido principal */}
+      <div className="w-full max-w-3xl space-y-6 mt-6">
+        <ExpenseForm addExpense={addExpense} />
+        <ExpenseList expenses={expenses} />
+        <Summary expenses={expenses} />
+      </div>
     </div>
   );
 }
