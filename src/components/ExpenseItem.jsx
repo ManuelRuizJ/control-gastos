@@ -16,6 +16,24 @@ function ExpenseItem({ expense, onEdit, onDelete }) {
     if (navigate) navigate("/");
   };
 
+  // Función para formatear la fecha
+  const formatDate = (timestamp) => {
+    if (!timestamp || !timestamp.seconds) return "Fecha inválida";
+    const date = new Date(timestamp.seconds * 1000); // Convierte a milisegundos
+
+    // Opciones para formatear la fecha y la hora
+    const options = {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true, // Usar formato de 12 horas (AM/PM)
+    };
+
+    return date.toLocaleString("es-ES", options); // Formatea la fecha y la hora
+  };
+
   return (
     <div className="bg-white shadow-md rounded-lg p-4 border border-gray-200 flex justify-between items-center">
       {/* Información del gasto */}
@@ -29,7 +47,7 @@ function ExpenseItem({ expense, onEdit, onDelete }) {
         </p>
         <p className="text-gray-500 text-sm">
           <span className="font-medium">Fecha:</span>{" "}
-          {new Date(expense.date).toLocaleDateString()}
+          {formatDate(expense.timestamp)} {/* Usa la función formatDate */}
         </p>
       </div>
 

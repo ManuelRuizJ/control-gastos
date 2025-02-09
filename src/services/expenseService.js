@@ -8,6 +8,7 @@ import {
   doc,
   query,
   where,
+  Timestamp,
 } from "firebase/firestore";
 import { app, auth } from "./firebaseConfig";
 import { getAuth } from "firebase/auth";
@@ -24,7 +25,7 @@ export const addExpense = async (amount, category, description) => {
       amount,
       category,
       description,
-      timestamp: new Date(),
+      timestamp: Timestamp.fromDate(new Date()), // Guarda la fecha como Timestamp
       userId: user.uid,
     });
     console.log("Gasto agregado con ID: ", docRef.id);
@@ -66,4 +67,14 @@ export const getExpenses = async () => {
     expenses.push({ id: doc.id, ...doc.data() });
   });
   return expenses;
+};
+
+const saveExpense = async (amount, category, description) => {
+  const expenseData = {
+    amount,
+    category,
+    description,
+    date: Timestamp.fromDate(new Date()), // Guarda la fecha como Timestamp
+  };
+  await firestore.collection("expenses").add(expenseData);
 };
